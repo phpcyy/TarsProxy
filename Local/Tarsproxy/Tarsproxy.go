@@ -1,9 +1,7 @@
 package main
 
 import (
-	"Local"
 	"bytes"
-	"configf"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -11,6 +9,8 @@ import (
 	"github.com/TarsCloud/TarsGo/tars/protocol/codec"
 	"github.com/TarsCloud/TarsGo/tars/protocol/res/requestf"
 	"github.com/TarsCloud/TarsGo/tars/util/tools"
+	"github.com/phpcyy/TarsProxy/Local/Tarsproxy/Local"
+	"github.com/phpcyy/TarsProxy/Local/Tarsproxy/configf"
 	"io/ioutil"
 	"log"
 	"net"
@@ -33,7 +33,7 @@ func main() {
 	localTcpProxy = fmt.Sprintf("%s:%d",
 		cfg.Adapters["Local.Tarsproxy.localTcpProxy"].Endpoint.Host,
 		cfg.Adapters["Local.Tarsproxy.localTcpProxy"].Endpoint.Port)
-	httpTarsGateWayUrl = fmt.Sprintf("http://%s:%d%s",
+	httpTarsGateWayUrl = fmt.Sprintf("https://%s:%d%s",
 		cfg.Adapters["Local.Tarsproxy.httpTarsGateWay"].Endpoint.Host,
 		cfg.Adapters["Local.Tarsproxy.httpTarsGateWay"].Endpoint.Port,
 		cfg.Adapters["Local.Tarsproxy.httpTarsGateWay"].Protocol)
@@ -52,7 +52,7 @@ func main() {
 		w.Write([]byte("Hello tafgo"))
 	})
 	mux.HandleFunc("/FindObjectById", func(w http.ResponseWriter, r *http.Request) {
-		endpointF,_ :=imp.FindObjectById("")
+		endpointF, _ := imp.FindObjectById("")
 		data, _ := json.Marshal(endpointF)
 		w.Write([]byte(data))
 	})
@@ -124,7 +124,7 @@ func recv(conn net.Conn) {
 			if status == PACKAGE_FULL {
 				//fmt.Printf("recv pkgLen:%d bufferLen:%d currBufferLen:%d  \n",pkgLen, len(buffer),len(currBuffer))
 
-				postBuffer := httpPost(currBuffer);
+				postBuffer := httpPost(currBuffer)
 				conn.Write(postBuffer)
 
 				currBuffer = currBuffer[pkgLen:]
@@ -140,53 +140,53 @@ func recv(conn net.Conn) {
 	}
 }
 
-func httpPost(buffer []byte)([]byte) {
+func httpPost(buffer []byte) []byte {
 	//taf.tafconfig.ConfigObj loadConfigByInfo
 	//tars.tarsconfig.ConfigObj
 
 	var body []byte
 
 	reqPackage := requestf.RequestPacket{}
-	if len(buffer)<4 {
-		fmt.Println("httpPost bufferlen",len(buffer))
-	}else {
+	if len(buffer) < 4 {
+		fmt.Println("httpPost bufferlen", len(buffer))
+	} else {
 		//fmt.Println( string(buffer) )
 		is := codec.NewReader(buffer[4:])
 		err := reqPackage.ReadFrom(is)
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Printf("%s:%s IVersion:%d len:%d \n", reqPackage.SServantName,reqPackage.SFuncName,reqPackage.IVersion, len(buffer))
+		fmt.Printf("%s:%s IVersion:%d len:%d \n", reqPackage.SServantName, reqPackage.SFuncName, reqPackage.IVersion, len(buffer))
 
 		if isConfigObj(reqPackage) {
 			body = getConfFile(reqPackage)
 		}
 	}
 
-	if len(body)>0 {
-		fmt.Println("httpPost useLocalConf bodylen",len(body))
-	}else {
+	if len(body) > 0 {
+		fmt.Println("httpPost useLocalConf bodylen", len(body))
+	} else {
 		body = _httpPost(buffer)
 	}
 
 	responsePacket := requestf.ResponsePacket{}
-	if len(body)<4 {
-		fmt.Println("httpPost bodylen",len(body))
-	}else {
+	if len(body) < 4 {
+		fmt.Println("httpPost bodylen", len(body))
+	} else {
 		//fmt.Println( string(body) )
 		is := codec.NewReader(body[4:])
 		responsePacket.ReadFrom(is)
-		fmt.Printf("IRet:%d len:%d SResultDesc:%s \n",responsePacket.IRet, len(body),responsePacket.SResultDesc)
+		fmt.Printf("IRet:%d len:%d SResultDesc:%s \n", responsePacket.IRet, len(body), responsePacket.SResultDesc)
 
 		if isConfigObj(reqPackage) {
-			go saveConfFile(reqPackage,responsePacket)
+			go saveConfFile(reqPackage, responsePacket)
 		}
 	}
 	return body
 }
 
 //save file when local don't have
-func saveConfFile(reqPackage requestf.RequestPacket,responsePacket requestf.ResponsePacket) {
+func saveConfFile(reqPackage requestf.RequestPacket, responsePacket requestf.ResponsePacket) {
 	if isConfigObj(reqPackage) {
 		var filePath string
 		var filename string
@@ -195,38 +195,38 @@ func saveConfFile(reqPackage requestf.RequestPacket,responsePacket requestf.Resp
 		_is := codec.NewReader(tools.Int8ToByte(reqPackage.SBuffer))
 		_os := codec.NewReader(tools.Int8ToByte(responsePacket.SBuffer))
 
-		if reqPackage.SFuncName=="loadConfig" {
+		if reqPackage.SFuncName == "loadConfig" {
 			_ = _is.Read_string(&filename, 3, true)
-			filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,filename)
+			filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
 			_ = _os.Read_string(&config, 4, true)
 
-		}else if reqPackage.SFuncName=="loadConfigByHost" {
+		} else if reqPackage.SFuncName == "loadConfigByHost" {
 			var host string
 			_ = _is.Read_string(&filename, 2, true)
 			_ = _is.Read_string(&host, 3, true)
-			if host=="" {
-				filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,filename)
-			}else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,host,filename)
+			if host == "" {
+				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
+			} else {
+				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, host, filename)
 			}
 			_ = _os.Read_string(&config, 4, true)
 
-		}else if reqPackage.SFuncName=="loadConfigByInfo" {
+		} else if reqPackage.SFuncName == "loadConfigByInfo" {
 			var configInfo configf.ConfigInfo
 			_ = configInfo.ReadBlock(_is, 1, true)
 			filename = configInfo.Filename
-			if configInfo.Host=="" {
-				filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,filename)
-			}else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,configInfo.Host,filename)
+			if configInfo.Host == "" {
+				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
+			} else {
+				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Host, filename)
 			}
 			_ = _os.Read_string(&config, 2, true)
 		}
 
-		if !checkFileIsExist(filePath) && config!="" {
-			path := strings.Replace(filePath,"/"+filename,"",1)
+		if !checkFileIsExist(filePath) && config != "" {
+			path := strings.Replace(filePath, "/"+filename, "", 1)
 			fmt.Println("saveConfFile MkdirAll path:", path)
-			_ = os.MkdirAll(path, os.ModePerm);
+			_ = os.MkdirAll(path, os.ModePerm)
 			_ = ioutil.WriteFile(filePath, []byte(config), 0666)
 			fmt.Println("saveConfFile filePath ", filePath)
 		}
@@ -242,58 +242,58 @@ func getConfFile(reqPackage requestf.RequestPacket) []byte {
 		_os := codec.NewBuffer()
 		var _funRet_ int32
 
-		if reqPackage.SFuncName=="loadConfig" {
+		if reqPackage.SFuncName == "loadConfig" {
 			var filename string
 			_ = _is.Read_string(&filename, 3, true)
-			filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,filename)
+			filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
 
 			if checkFileIsExist(filePath) {
 				data, err := ioutil.ReadFile(filePath)
 				if err != nil {
 					fmt.Println("read file err:", err.Error())
-				}else {
+				} else {
 					_os.Reset()
 					_ = _os.Write_int32(_funRet_, 0)
 					_ = _os.Write_string(string(data), 4)
 				}
 				fmt.Println("getConfFile filePath ", filePath)
 			}
-		}else if reqPackage.SFuncName=="loadConfigByHost" {
+		} else if reqPackage.SFuncName == "loadConfigByHost" {
 			var filename string
 			var host string
 			_ = _is.Read_string(&filename, 2, true)
 			_ = _is.Read_string(&host, 3, true)
-			if host=="" {
-				filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,filename)
-			}else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,host,filename)
+			if host == "" {
+				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
+			} else {
+				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, host, filename)
 			}
 
 			if checkFileIsExist(filePath) {
 				data, err := ioutil.ReadFile(filePath)
 				if err != nil {
 					fmt.Println("read file err:", err.Error())
-				}else {
+				} else {
 					_os.Reset()
 					err = _os.Write_int32(_funRet_, 0)
 					err = _os.Write_string(string(data), 4)
 				}
 				fmt.Println("getConfFile filePath ", filePath)
 			}
-		}else if reqPackage.SFuncName=="loadConfigByInfo" {
+		} else if reqPackage.SFuncName == "loadConfigByInfo" {
 			var configInfo configf.ConfigInfo
 			_ = configInfo.ReadBlock(_is, 1, true)
-			if configInfo.Host=="" {
-				filePath = fmt.Sprintf("%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,configInfo.Filename)
-			}else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s",ConfigObjPathPre,reqPackage.SServantName,configInfo.Host,configInfo.Filename)
+			if configInfo.Host == "" {
+				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Filename)
+			} else {
+				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Host, configInfo.Filename)
 			}
 
 			if checkFileIsExist(filePath) {
 				data, err := ioutil.ReadFile(filePath)
 				if err != nil {
 					fmt.Println("read file err:", err.Error())
-				}else {
+				} else {
 					_os.Reset()
 					err = _os.Write_int32(_funRet_, 0)
 					err = _os.Write_string(string(data), 2)
@@ -302,7 +302,7 @@ func getConfFile(reqPackage requestf.RequestPacket) []byte {
 			}
 		}
 
-		if len(_os.ToBytes())>0 {
+		if len(_os.ToBytes()) > 0 {
 			var _status map[string]string
 			var _context map[string]string
 			tarsResp := requestf.ResponsePacket{
@@ -331,16 +331,16 @@ func checkFileIsExist(filename string) bool {
 }
 
 func isConfigObj(reqPackage requestf.RequestPacket) bool {
-	if reqPackage.SServantName=="taf.tafconfig.ConfigObj" || reqPackage.SServantName=="tars.tarsconfig.ConfigObj" {
-		if reqPackage.SFuncName=="loadConfig" || reqPackage.SFuncName=="loadConfigByHost" || reqPackage.SFuncName=="loadConfigByInfo" {
-			return true;
+	if reqPackage.SServantName == "taf.tafconfig.ConfigObj" || reqPackage.SServantName == "tars.tarsconfig.ConfigObj" {
+		if reqPackage.SFuncName == "loadConfig" || reqPackage.SFuncName == "loadConfigByHost" || reqPackage.SFuncName == "loadConfigByInfo" {
+			return true
 		}
 	}
-	return false;
+	return false
 }
 
-func _httpPost(buffer []byte)([]byte) {
-	resp, err := http.Post(httpTarsGateWayUrl,"",bytes.NewBuffer(buffer))
+func _httpPost(buffer []byte) []byte {
+	resp, err := http.Post(httpTarsGateWayUrl, "", bytes.NewBuffer(buffer))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -348,8 +348,9 @@ func _httpPost(buffer []byte)([]byte) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("tarsGateWay httpPost error",err)
+		fmt.Println("tarsGateWay httpPost error", err)
 	}
+	fmt.Printf("_httpPost body: %s\n", body)
 	return body
 }
 

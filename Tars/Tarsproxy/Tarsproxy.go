@@ -6,10 +6,10 @@ import (
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/TarsCloud/TarsGo/tars/protocol/codec"
 	"github.com/TarsCloud/TarsGo/tars/protocol/res/requestf"
+	"github.com/phpcyy/TarsProxy/Tars/Tarsproxy/queryf"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"queryf"
 )
 
 var clientLocator string
@@ -29,7 +29,7 @@ func main() {
 		w.Write([]byte("Hello tafgo"))
 	})
 	mux.HandleFunc("/tup", func(w http.ResponseWriter, r *http.Request) {
-		handlePostTup(w,r)
+		handlePostTup(w, r)
 	})
 	tars.AddHttpServant(mux, cfg.App+"."+cfg.Server+".HttpObj") //Register http server
 
@@ -37,17 +37,17 @@ func main() {
 	tars.Run()
 }
 
-func handlePostTup(w http.ResponseWriter, r *http.Request)  {
+func handlePostTup(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
-	if method!="POST" {
-		_,_ = w.Write([]byte(method))
+	if method != "POST" {
+		_, _ = w.Write([]byte(method))
 		return
 	}
-	fmt.Println("tup method:",method)
+	fmt.Println("tup method:", method)
 
 	reqBuffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println("tup ReadAll error",err)
+		fmt.Println("tup ReadAll error", err)
 	}
 
 	//解码请求buffer，获取服务名&方法名
@@ -55,11 +55,11 @@ func handlePostTup(w http.ResponseWriter, r *http.Request)  {
 	is := codec.NewReader(reqBuffer[4:])
 	err = reqPackage.ReadFrom(is)
 	if err != nil {
-		fmt.Println("tup ReadFrom",err)
+		fmt.Println("tup ReadFrom", err)
 	}
 	SServantName := reqPackage.SServantName
 	SFuncName := reqPackage.SFuncName
-	fmt.Println("tup SServantName.SFuncName ",SServantName,SFuncName)
+	fmt.Println("tup SServantName.SFuncName ", SServantName, SFuncName)
 
 	//获取服务的ip&port
 	comm := tars.NewCommunicator()
@@ -70,14 +70,14 @@ func handlePostTup(w http.ResponseWriter, r *http.Request)  {
 	if err != nil {
 		fmt.Println(err)
 	}
-	locator:= fmt.Sprintf("%s:%d",endpointF[0].Host,endpointF[0].Port)
-	fmt.Println("tup locator ",locator)
+	locator := fmt.Sprintf("%s:%d", endpointF[0].Host, endpointF[0].Port)
+	fmt.Println("tup locator ", locator)
 
 	//转发buffer给服务
 	var tcpAddr *net.TCPAddr
-	tcpAddr,_ = net.ResolveTCPAddr("tcp",locator)
-	conn,err := net.DialTCP("tcp",nil,tcpAddr)
-	if err!=nil {
+	tcpAddr, _ = net.ResolveTCPAddr("tcp", locator)
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
 		fmt.Println("Client connect error ! " + err.Error())
 		return
 	}
@@ -87,7 +87,7 @@ func handlePostTup(w http.ResponseWriter, r *http.Request)  {
 	conn.Write(reqBuffer)
 
 	respBuffer := recv(conn)
-	_,_ = w.Write(respBuffer)
+	_, _ = w.Write(respBuffer)
 }
 
 func recv(conn net.Conn) []byte {

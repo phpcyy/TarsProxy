@@ -1,10 +1,10 @@
 package main
 
 import (
-	"Local"
-	"PHPTest"
 	"fmt"
 	"github.com/TarsCloud/TarsGo/tars"
+	"github.com/phpcyy/TarsProxy/Local/Tarsproxy/Local"
+	"github.com/phpcyy/TarsProxy/Local/Tarsproxy/PHPTest"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 
 }
 
-func test4()  {
+func test4() {
 	//test proxy
 
 	comm := tars.NewCommunicator()
@@ -27,7 +27,7 @@ func test4()  {
 	app.TestTafServer()
 }
 
-func test3()  {
+func test3() {
 	//test proxy
 
 	comm := tars.NewCommunicator()
@@ -40,16 +40,16 @@ func test3()  {
 	var F string
 
 	for i := 0; i < 10; i++ {
-		ret,err := app.TestBasic(false,2,"3",&D,&E,&F);
-		fmt.Println(ret,D,E,F)
+		ret, err := app.TestBasic(false, 2, "3", &D, &E, &F)
+		fmt.Println(ret, D, E, F)
 		if err != nil {
-			fmt.Println("test3 err",err)
+			fmt.Println("test3 err", err)
 		}
 		//time.Sleep(1* time.Second)
 	}
 }
 
-func test2()  {
+func test2() {
 	//test proxy
 
 	comm := tars.NewCommunicator()
@@ -60,13 +60,13 @@ func test2()  {
 	var outGreetings string
 
 	value := "1111xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-	for i:=0; i<10; i++ {
+	for i := 0; i < 10; i++ {
 		value += "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 	}
 	value += "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx333"
 
 	value = "aaaaa"
-	err := app.SayHelloWorld(value,&outGreetings);
+	err := app.SayHelloWorld(value, &outGreetings)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -74,7 +74,7 @@ func test2()  {
 	fmt.Println(outGreetings)
 }
 
-func test1()  {
+func test1() {
 	comm := tars.NewCommunicator()
 	obj := fmt.Sprintf("Local.Tarsproxy.RegistryObj@tcp -h 127.0.0.1 -p 10015 -t 60000")
 	app := new(Local.RegistryObj)
@@ -89,8 +89,8 @@ func test1()  {
 	//}
 	//fmt.Println(ret, out)
 
-	endpointF, err := app.FindObjectById("App.Server.Obj");
-	println(endpointF[0].Host,endpointF[0].Port)
+	endpointF, err := app.FindObjectById("App.Server.Obj")
+	println(endpointF[0].Host, endpointF[0].Port)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -98,10 +98,10 @@ func test1()  {
 
 	var activeEp []Local.EndpointF
 	var inactiveEp []Local.EndpointF
-	ret,err := app.FindObjectByIdInSameGroup("App.Server.Obj",&activeEp,&inactiveEp);
+	ret, err := app.FindObjectByIdInSameGroup("App.Server.Obj", &activeEp, &inactiveEp)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	println(ret,activeEp[0].Host,activeEp[0].Port)
+	println(ret, activeEp[0].Host, activeEp[0].Port)
 }
