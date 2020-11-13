@@ -216,9 +216,9 @@ func saveConfFile(reqPackage requestf.RequestPacket, responsePacket requestf.Res
 			_ = configInfo.ReadBlock(_is, 1, true)
 			filename = configInfo.Filename
 			if configInfo.Host == "" {
-				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, filename)
+				filePath = fmt.Sprintf("%s/%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Appname, configInfo.Servername, filename)
 			} else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Host, filename)
+				filePath = fmt.Sprintf("%s/%s/%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Appname, configInfo.Servername, configInfo.Host, filename)
 			}
 			_ = _os.Read_string(&config, 2, true)
 		}
@@ -284,9 +284,9 @@ func getConfFile(reqPackage requestf.RequestPacket) []byte {
 			var configInfo configf.ConfigInfo
 			_ = configInfo.ReadBlock(_is, 1, true)
 			if configInfo.Host == "" {
-				filePath = fmt.Sprintf("%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Filename)
+				filePath = fmt.Sprintf("%s/%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Appname, configInfo.Servername, configInfo.Filename)
 			} else {
-				filePath = fmt.Sprintf("%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Host, configInfo.Filename)
+				filePath = fmt.Sprintf("%s/%s/%s/%s/%s/%s", ConfigObjPathPre, reqPackage.SServantName, configInfo.Appname, configInfo.Servername, configInfo.Host, configInfo.Filename)
 			}
 
 			if checkFileIsExist(filePath) {
